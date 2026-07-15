@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --font-family-sans: 'Tajawal', 'Cairo', sans-serif;
+  --color-primary: #3b82f6;
+  --color-primary-light: #60a5fa;
+  --color-primary-dark: #2563eb;
+  --color-bg-main: #eef2f7;
+  --color-bg-panel: #f8fafc;
+  --color-bg-white: #ffffff;
+  --color-border: #d1d9e6;
+  --color-border-light: #e2e8f0;
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-blue-accent: #dbeafe;
+  --color-male: #3b82f6;
+  --color-female: #ec4899;
+  --color-selected: #2563eb;
+}
+
+* {
+  font-family: 'Tajawal', 'Cairo', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #c9d6e8;
+  overflow: hidden;
+  direction: rtl;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1d0e4;
+  border-radius: 6px;
+  border: 2px solid #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94b0d0;
+}
+
+/* Menu item hover */
+.menu-item {
+  transition: background 0.12s ease;
+}
+.menu-item:hover {
+  background: linear-gradient(to bottom, #3b82f6, #2563eb);
+  color: white;
+}
+
+/* Family tree node */
+.tree-node {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.tree-node:hover {
+  transform: translateY(-2px);
+}
+.tree-node.selected {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5), 0 10px 25px -5px rgba(37, 99, 235, 0.45);
+  border-color: #2563eb !important;
+}
+
+/* Button press effect */
+.action-btn {
+  transition: all 0.1s ease;
+}
+.action-btn:active {
+  transform: translateY(1px);
+}
