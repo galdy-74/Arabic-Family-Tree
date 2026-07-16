@@ -1062,9 +1062,9 @@ const colorMap: Record<string, { bg: string; border: string; avatarBg: string; a
   sky: { bg: 'linear-gradient(145deg, #e0f2fe, #bae6fd)', border: '#7dd3fc', avatarBg: 'linear-gradient(145deg, #0ea5e9, #075985)', avatarShadow: '0 2px 5px rgba(7,89,133,0.35)', text: '#082f49', countBg: '#ffffff', countText: '#075985' },
 };
 
-function RightSidebar({ families, persons, selectedFamilyId, onSelectFamily, onAddFamily, search, setSearch, onAddPerson, selectedTab, setSelectedTab }: {
+function RightSidebar({ families, persons, selectedFamilyId, onSelectFamily, onSelectPerson, onAddFamily, search, setSearch, onAddPerson, selectedTab, setSelectedTab }: {
   families: Family[]; persons: Person[]; selectedFamilyId: string | null;
-  onSelectFamily: (id: string | null) => void; onAddFamily: () => void;
+  onSelectFamily: (id: string | null) => void; onSelectPerson: (id: string) => void; onAddFamily: () => void;
   search: string; setSearch: (s: string) => void; onAddPerson: () => void;
   selectedTab: 'families' | 'persons'; setSelectedTab: (t: 'families' | 'persons') => void;
 }) {
@@ -1151,7 +1151,7 @@ function RightSidebar({ families, persons, selectedFamilyId, onSelectFamily, onA
           ) : (
             <div className="space-y-1">
               {filteredPersons.map(p => (
-                <button key={p.id} onClick={() => onSelectFamily(p.familyId)} // we can also select person but for now keep family selection? Actually we want person selection - but parent handles person select separately
+                <button key={p.id} onClick={() => { onSelectFamily(p.familyId); onSelectPerson(p.id); }}
                   className="w-full flex items-center gap-2 p-1.5 rounded-xl bg-white border border-slate-200 hover:border-blue-200 hover:bg-blue-50/50 transition text-right">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold"
                     style={{ background: p.gender === 'male' ? 'linear-gradient(145deg, #60a5fa, #2563eb)' : 'linear-gradient(145deg, #f472b6, #be185d)' }}>
@@ -1298,7 +1298,24 @@ function PersonModal({
 
   useEffect(() => {
     if (initialData) setForm(initialData);
+    else if (isOpen) setForm({
+      name: '', gender: 'male' as Gender, birthYear: String(new Date().getFullYear() - 25),
+      birthDate: '01/01/2000', birthPlace: 'الرياض، السعودية', job: '', nationality: 'سعودي',
+      generation: 1, isDeceased: false, familyId: families[0]?.id || 'fam-1',
+      phone: '', email: '', city: 'الرياض', neighborhood: '', postalCode: '', photoUrl: null
+    });
   }, [initialData, isOpen]);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2_000_000) { alert('الصورة كبيرة جداً - الحد 2MB'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm(f => ({ ...f, photoUrl: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   if (!isOpen) return null;
 
@@ -1329,6 +1346,21 @@ function PersonModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+          {/* Photo upload */}
+          <div className="flex items-start gap-3 p-3 rounded-xl bg-gradient-to-br from-slate-50 to-blue-50/50 border border-slate-200">
+            <div className="w-[64px] h-[64px] rounded-xl overflow-hidden bg-white border border-slate-200 flex items-center justify-center shrink-0">
+              {form.photoUrl ? <img src={form.photoUrl} alt="preview" className="w-full h-full object-cover" /> : <ImageIcon size={20} className="text-slate-400" />}
+            </div>
+            <div className="flex-1">
+              <label className="text-[11px] font-bold text-slate-700 mb-1 block flex items-center gap-1"><ImageIcon size={11} /> صورة الشخص (اختياري)</label>
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="w-full text-[11px] file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border file:border-slate-200 file:bg-white file:text-[11px] file:font-bold hover:file:bg-slate-50" />
+              <div className="flex gap-2 mt-1.5">
+                <input value={form.photoUrl || ''} onChange={e => setForm({ ...form, photoUrl: e.target.value || null })} placeholder="أو رابط صورة https://..." className="flex-1 px-2 py-1 rounded-lg border border-slate-200 text-[10px]" />
+                {form.photoUrl && <button type="button" onClick={() => setForm({ ...form, photoUrl: null })} className="px-2 py-1 rounded-lg bg-red-50 text-red-600 border border-red-200 text-[10px] font-bold">حذف</button>}
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="text-[11px] font-bold text-slate-700 mb-1 block">الاسم الكامل *</label>
@@ -1808,6 +1840,7 @@ export default function App() {
           persons={persons}
           selectedFamilyId={selectedFamilyId}
           onSelectFamily={(id) => { setSelectedFamilyId(id); markAction(`اختيار ${id ? families.find(f => f.id === id)?.name : 'كل العائلات'}`); }}
+          onSelectPerson={(id) => { setSelectedPersonId(id); markAction(`اختيار ${persons.find(p => p.id === id)?.name}`); }}
           onAddFamily={() => setFamilyOpen(true)}
           search={familySearch}
           setSearch={setFamilySearch}
