@@ -4,11 +4,11 @@ import {
   Trash2, UserPen, UserPlus, Printer, Save, FolderOpen, FilePlus,
   ZoomIn, ZoomOut, Move, RotateCcw, ChevronUp, ChevronLeft, ChevronRight,
   User, Phone, Mail, MapPin, Calendar, Home, Briefcase, HeartHandshake,
-  Users, Pencil, Plus, Filter, LayoutGrid, Share2, Database, Eye, Clock,
+  Users, Pencil, Plus, LayoutGrid, Share2, Database, Eye, Clock,
   HardDrive, MousePointer, AlertCircle, Network, Check, List,
-  Copy, ArrowUpDown, Download, FileType, GitBranch, File, Shield, Flag,
-  Maximize2, ShieldCheck, MousePointer2, Sparkles, UserCheck, AlertTriangle,
-  Info, FileJson, Image as ImageIcon, Link2, Crown, Star, LockKeyhole
+  Copy, ArrowUpDown, Download, GitBranch, File, Shield, Flag,
+  Maximize2, ShieldCheck, MousePointer2, Sparkles, AlertTriangle,
+  Info, Image as ImageIcon, Crown
 } from 'lucide-react';
 
 // ==================== TYPES ====================
@@ -524,8 +524,6 @@ function TreeCanvas({
   };
   const handleMouseUp = () => setIsDragging(false);
 
-  const getFamilyForPerson = (p: Person) => p.fatherId || p.motherId ? allPersons.find(x => x.id === (p.fatherId || p.motherId)) : null;
-
   return (
     <div className="flex-1 relative overflow-hidden flex flex-col"
       style={{ background: `radial-gradient(circle at 25% 25%, rgba(147,197,253,0.15) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(236,72,153,0.08) 0%, transparent 50%), linear-gradient(135deg, #f8fafc 0%, #eff6ff 40%, #f1f5f9 100%)` }}>
@@ -610,7 +608,7 @@ function TreeCanvas({
               <List size={10} strokeWidth={2.2} className="text-slate-600" /><span className="text-[10px] font-bold text-slate-700">الخريطة المصغرة</span>
             </div>
             <div className="relative h-[100px] m-2 bg-slate-50 rounded-lg border border-slate-200 overflow-hidden">
-              {grouped.map(([gen, per], i) => (
+              {grouped.map(([gen], i) => (
                 <div key={gen} className="absolute h-1 rounded opacity-60"
                   style={{ top: `${8 + i * 26}px`, right: '8px', left: '8px', background: `linear-gradient(to right, ${i % 2 === 0 ? '#60a5fa, #f472b6' : '#f472b6, #60a5fa'})` }}></div>
               ))}
@@ -681,7 +679,7 @@ function TreeCanvas({
                 });
 
                 // Combine for display: couples + singles
-                const allNodes = [...couples, ...singles.map(s => ({ a: s }))];
+                const allNodes: Array<{ a: Person; b?: Person }> = [...couples, ...singles.map(s => ({ a: s }))];
 
                 return (
                   <React.Fragment key={gen}>
@@ -703,8 +701,9 @@ function TreeCanvas({
                     {/* Generation Row */}
                     <div className={`flex items-start justify-center gap-8 flex-wrap max-w-6xl ${genIdx === 0 ? 'mt-2' : ''}`}>
                       {allNodes.map((node, idx) => {
-                        if ('b' in node && node.b) {
+                        if (node.b) {
                           // couple
+                          const spouseB: Person = node.b;
                           return (
                             <div key={idx} className="flex items-start gap-0">
                               <PersonNode person={node.a} selected={selectedId === node.a.id} onSelect={() => onSelect(node.a.id)} onEdit={() => onEdit(node.a.id)} onDelete={() => onDelete(node.a.id)} onAddChild={() => onAddChild(node.a.id)} onAddSpouse={() => onAddSpouse(node.a.id)} />
@@ -713,7 +712,7 @@ function TreeCanvas({
                                 <Heart size={12} strokeWidth={1.8} className="text-pink-500 fill-pink-100 mx-0.5" />
                                 <div className="w-5 h-0 border-t-2 border-dashed border-pink-400"></div>
                               </div>
-                              <PersonNode person={node.b} selected={selectedId === node.b.id} onSelect={() => onSelect(node.b.id)} onEdit={() => onEdit(node.b.id)} onDelete={() => onDelete(node.b.id)} onAddChild={() => onAddChild(node.b.id)} onAddSpouse={() => onAddSpouse(node.b.id)} />
+                              <PersonNode person={spouseB} selected={selectedId === spouseB.id} onSelect={() => onSelect(spouseB.id)} onEdit={() => onEdit(spouseB.id)} onDelete={() => onDelete(spouseB.id)} onAddChild={() => onAddChild(spouseB.id)} onAddSpouse={() => onAddSpouse(spouseB.id)} />
                             </div>
                           );
                         } else {
@@ -1609,11 +1608,8 @@ export default function App() {
 
   const visiblePersons = useMemo(() => {
     if (!selectedFamilyId) return persons;
-    // include family members plus their children/spouses maybe? For simplicity filter by familyId OR related to family members
     const famMemberIds = new Set(persons.filter(p => p.familyId === selectedFamilyId).map(p => p.id));
-    // include all persons whose family is selected OR they are closely related to someone in that family (spouse/child of member)
-    // For now strict family filter for clarity
-    return persons.filter(p => p.familyId === selectedFamilyId);
+    return persons.filter(p => p.familyId === selectedFamilyId || (p.fatherId && famMemberIds.has(p.fatherId)) || (p.motherId && famMemberIds.has(p.motherId)));
   }, [persons, selectedFamilyId]);
 
   // Actions
